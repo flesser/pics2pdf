@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="Convert multiple images into one multi-paged PDF file. Optionally resize images.">
+        <meta name="author" content="Florian Eßer">
+        <link rel="icon" href="favicon.ico">
+
+        <title>pics2pdf.js</title>
+
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootstrap.min.css">
+
+        <style type="text/css">
+            /* http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
+            .btn-file {
+                position: relative;
+                overflow: hidden;
+            }
+            .btn-file input[type=file] {
+                position: absolute;
+                top: 0;
+                right: 0;
+                min-width: 100%;
+                min-height: 100%;
+                font-size: 100px;
+                text-align: right;
+                filter: alpha(opacity=0);
+                opacity: 0;
+                outline: none;
+                background: white;
+                cursor: inherit;
+                display: block;
+            }
+
+            /* clearfix helpers for mixed column heights. http://stackoverflow.com/a/24590544 */
+            /* xs: 2 columns */
+            @media (max-width: 767px) {
+                #image-row>.clear:nth-child(4n)::before { content: ''; display: table; clear: both; }
+            }
+            /* sm: 3 columns */
+            @media (min-width: 768px) and (max-width: 991px) {
+                #image-row>.clear:nth-child(6n)::before { content: ''; display: table; clear: both; }
+            }
+            /* md: 4 columns */
+            @media (min-width: 992px) and (max-width: 1199px) {
+                #image-row>.clear:nth-child(8n)::before { content: ''; display: table; clear: both; }
+            }
+            /* lg: 6 columns */
+            @media (min-width: 1200px) {
+                #image-row>.clear:nth-child(12n)::before { content: ''; display: table; clear: both; }
+            }
+
+            /* image overlays */
+            .image-overlay {
+                background-color: #000;
+                color: #fff;
+                opacity: 0;
+                position: absolute;
+                margin: 4px;
+                -webkit-transition: all 300ms ease-out;
+                -moz-transition: all 300ms ease-out;
+                -o-transition: all 300ms ease-out;
+                -ms-transition: all 300ms ease-out;
+                transition: all 300ms ease-out;
+            }
+            .image-caption {
+                bottom: 0;
+                left: 0;
+                width: calc(100% - 8px);
+                padding-bottom: 4px;
+            }
+            .image-buttons {
+                top: 0;
+                right: 0;
+                padding: 4px;
+                font-size: 200%;
+            }
+            .thumbnail {
+                position: relative;
+                min-height: 100px;
+            }
+            .thumbnail:focus .image-overlay,
+            .thumbnail:hover .image-overlay {
+                opacity: 0.5
+            }
+
+            /* keep the footer horizontal even in xs mode */
+            footer .navbar-text,
+            footer .navbar-nav,
+            footer .navbar-nav > li {
+                float: left !important;
+            }
+            footer .navbar-right,
+            footer .navbar-right > li {
+                float: right !important;
+            }
+            footer .navbar-text {
+                margin: 15px;
+            }
+        </style>
+    </head>
+
+    <body style="padding-top: 70px; padding-bottom: 70px;">
+        <!-- Fixed navbar -->
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">pics2pdf.js</a>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+
+                    <p class="navbar-text">Step 1:</p>
+                    <span class="btn btn-primary navbar-btn btn-file navbar-nav">
+                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                        Add Images
+                        <input type="file" id="image-input" name="images[]" accept="image/*" multiple />
+                    </span>
+
+<!--                    <p class="navbar-text">Step 2:</p>
+                    <div class="btn-group navbar-nav">
+                        <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                            Settings (default) <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-header">max. image size in PDF</li>
+                            <li><a href="#">800px (small)</a></li>
+                            <li><a href="#">1000px (medium)</a></li>
+                            <li><a href="#">2000px (large)</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">original size</a></li>
+                        </ul>
+                    </div>-->
+
+                    <p class="navbar-text">Step 2:</p>
+                    <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav">
+                        <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                        Create PDF
+                    </button>
+                </div><!--/.nav-collapse -->
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row" id="image-row"></div>
+        </div>
+
+        <!-- Fixed footer -->
+        <footer class="navbar navbar-default navbar-fixed-bottom">
+            <div class="container-fluid">
+                <p class="navbar-text" id="status-pagecount">0 pages</p>
+                <p class="navbar-text" id="status-filesize">ca. 0 MB</p>
+
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="https://github.com/flesser/flesser.github.io">
+                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                        About
+                    </a></li>
+                </ul>
+            </div>
+        </footer>
+
+
+        <!-- JQuery & Bootstrap JS -->
+        <script src="3rdparty/jquery.min.js"></script>
+        <script src="3rdparty/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+
+        <!-- spin.js -->
+        <script src="3rdparty/spin.min.js"></script>
+        <script src="3rdparty/jquery.spin.js"></script>
+
+        <!-- JQuery UI sortable -->
+        <script src="3rdparty/jquery-ui.sortable.min.js"></script>
+
+        <!-- jsPDF -->
+        <script src="3rdparty/jspdf.min.js"></script>
+
+        <!-- pics2pdf.js -->
+        <script type="text/javascript">
+            function fitImage(img, maxLong, maxShort) {
+                maxShort = maxShort || maxLong;
+                if (img.width > img.height) {
+                    if (img.width <= maxLong && img.height <= maxShort) {
+                        // no resizing necessary
+                        return [img.width, img.height];
+                    }
+                    var widthRatio = maxLong / img.width;
+                    var heightRatio = maxShort / img.height;
+                } else {
+                    if (img.height <= maxLong && img.width <= maxShort) {
+                        // no resizing necessary
+                        return [img.width, img.height];
+                    }
+                    var widthRatio = maxShort / img.width;
+                    var heightRatio = maxLong / img.height;
+                }
+
+                var resizeRatio = Math.min(widthRatio, heightRatio);
+
+                return [img.width * resizeRatio, img.height * resizeRatio];
+            }
+
+            function handleFileSelect(evt) {
+                var files = evt.target.files;
+
+                for (var i = 0; i < files.length; i++) {
+                    var f = files[i];
+                    if (!f.type.match('image.*')) continue;
+
+                    var imageContainer = $('<div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container"></div>');
+                    var thumbnail = $('<div class="thumbnail text-center"></div>').appendTo(imageContainer);
+                    var buttons = $('<div class="image-overlay image-buttons"></div>').appendTo(thumbnail);
+                    thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
+                    thumbnail.spin();
+
+                    var deleteButton = $('<a title="remove" href="#">'
+                                          + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
+                                          + '<span class="sr-only">remove</span></a>').appendTo(buttons);
+                    deleteButton.click(function() {
+                        $(this).parent().parent().parent().fadeOut('', function() {
+                            $(this).next('.clear').remove();  // remove clear helper
+                            $(this).remove();  // remove image
+                        });
+                    });
+
+                    $('#image-row').append(imageContainer);
+                    $('#image-row').append($('<div class="clear"></div>'));
+
+                    thumbnail.data('filesize', f.size);
+
+                    var reader = new FileReader();
+                    reader.onload = (function(thumbnail, file) {
+                        return function(e) {
+                            var img = document.createElement('img');
+                            img.src = e.target.result;
+                            thumbnail.data('imagedata', e.target.result);
+                            img.onload = function() {
+                                var canvas = document.createElement('canvas');
+
+                                thumbnail.data('width', this.width);
+                                thumbnail.data('height', this.height);
+
+                                var dimensions = fitImage(this, 500);
+                                canvas.width = dimensions[0];
+                                canvas.height = dimensions[1];
+
+                                var ctx = canvas.getContext("2d");
+                                ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
+                                var dataurl = canvas.toDataURL("image/png");
+                                thumbnail.children('.image-caption').addClass('image-overlay');
+                                thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="' + escape(file.name) + '"/>'));
+                                thumbnail.spin(false);
+                            }
+                            delete this;
+                        };
+                    })(thumbnail, f);
+                    reader.readAsDataURL(f);
+                }
+                // reset file input
+                evt.target.value = null;
+
+                $('#status-pagecount').text($(".thumbnail").length + ' pages');
+
+                var totalSize = 0;
+                $(".thumbnail").each(function() {
+                    totalSize += $(this).data('filesize');
+                });
+                totalSize /= 1024*1024;
+                $('#status-filesize').text('ca. ' + totalSize.toFixed(1) + ' MB');
+            }
+
+            function createPDF() {
+                var pdf = jsPDF('l', 'in', 'a4');
+                pdf.deletePage(1);
+
+                $(".thumbnail").each(function() {
+                    var DPI = 300;  // TODO: option
+                    var width = $(this).data('width') / DPI;
+                    var height = $(this).data('height') / DPI;
+                    var imagedata = $(this).data('imagedata');
+                    pdf.addPage([width, height]);
+                    pdf.addImage(imagedata, 'jpg', 0, 0, width, height);
+                });
+                pdf.save('output.pdf');
+            }
+
+            $(document).ready(function() {
+                $('#image-input').bind('change', handleFileSelect);
+                $('#image-row').sortable({
+                    items: "> .image-container",
+                    helper: 'clone',
+                    placeholder: 'col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container',
+                    start: function(e, ui) {
+                        // remove old clearfix helper
+                        ui.item.next().next('.clear').remove();
+                    },
+                    stop: function(e, ui) {
+                        // create new clearfix helper
+                        if(ui.item.prev('.clear').length > 0) {
+                            // dropped after clearfix helper --> create new one after
+                            ui.item.after($('<div class="clear"></div>'));
+                        } else if(ui.item.next('.clear').length > 0) {
+                            // dropped before clearfix helper --> create new one before
+                            ui.item.before($('<div class="clear"></div>'));
+                        }
+                    }
+                });
+                $('#pdfbutton').click(createPDF);
+            });
+        </script>
+    </body>
+</html>
+
