@@ -84,13 +84,27 @@
             .thumbnail {
                 position: relative;
                 min-height: 100px;
+                cursor: move;
             }
             .thumbnail:focus .image-overlay,
             .thumbnail:hover .image-overlay {
                 opacity: 0.75
             }
 
-            /* keep the footer horizontal even in xs mode */
+            /* dropdown settings */
+            .dropdown-menu li .glyphicon {
+                display: none;
+            }
+
+            .dropdown-menu li.selected .glyphicon {
+                display: inline-block;
+            }
+
+            .dropdown-menu li.selected a {
+                font-weight: bold;
+            }
+
+            /* keep navbar horizontal even in xs mode */
             .navbar-text,
             .navbar-nav,
             .navbar-nav > li {
@@ -101,9 +115,12 @@
                 float: right !important;
             }
             .navbar-text,
-            .navbar-btn {
+            .navbar-nav {
                 margin-left: 15px;
                 margin-right: 15px;
+            }
+            .navbar .btn-group {
+                margin: 0;
             }
         </style>
     </head>
@@ -112,36 +129,24 @@
         <!-- Fixed navbar -->
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
-
                 <div class="navbar-header">
                     <span class="navbar-brand hidden-xs">pic2pdf.js</a>
                 </div>
 
-                <p class="navbar-text">Step 1:</p>
                 <span class="btn btn-primary navbar-btn btn-file navbar-nav">
-                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     Add Images
                     <input type="file" id="image-input" name="images[]" accept="image/*" multiple />
                 </span>
 
-<!--                    <p class="navbar-text">Step 2:</p>
-                    <div class="btn-group navbar-nav">
-                        <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
-                            Settings (default) <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li class="dropdown-header">max. image size in PDF</li>
-                            <li><a href="#">800px (small)</a></li>
-                            <li><a href="#">1000px (medium)</a></li>
-                            <li><a href="#">2000px (large)</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">original size</a></li>
-                        </ul>
-                    </div>-->
+                <div class="btn-group navbar-nav">
+                    <button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#optionsModal">
+                        <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                        PDF Options
+                    </button>
+                </div>
 
-                <p class="navbar-text">Step 2:</p>
-                <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav">
+                <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav disabled">
                     <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
                     Create PDF
                 </button>
@@ -150,6 +155,56 @@
 
         <div class="container-fluid">
             <div class="row" id="image-row"></div>
+        </div>
+
+        <div class="modal fade" id="optionsModal" tabindex="-1" role="dialog" aria-labelledby="optionsModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="optionsModalLabel">PDF Options</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="pdfTitle">Title</label>
+                                <input type="text" class="form-control" id="pdfTitle" placeholder="Document Title">
+                            </div>
+                            <div class="form-group">
+                                <label for="pdfSubject">Subject</label>
+                                <input type="text" class="form-control" id="pdfSubject" placeholder="This is the subject">
+                            </div>
+                            <div class="form-group">
+                                <label for="pdfAuthor">Author</label>
+                                <input type="text" class="form-control" id="pdfAuthor" placeholder="John Doe">
+                            </div>
+                        </form>
+<!--                        <hr>
+                        <form>
+                            <label>File size reduction</label>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="resizeRadios" value="false" checked>
+                                    keep original image size
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="resizeRadios" value="true">
+                                    reduce images to a maximum width/height of
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxImageSize" value="1000">
+                                        <div class="input-group-addon">px</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </form>-->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Fixed footer -->
@@ -227,6 +282,9 @@
                         $(this).parent().parent().parent().fadeOut('', function() {
                             $(this).next('.clear').remove();  // remove clear helper
                             $(this).remove();  // remove image
+                            if ($(".thumbnail").length == 0) {
+                                $('#pdfbutton').addClass('disabled');
+                            }
                         });
                     });
 
@@ -236,7 +294,7 @@
                     thumbnail.data('filesize', f.size);
 
                     var reader = new FileReader();
-                    reader.onload = (function(thumbnail, file) {
+                    reader.onload = (function(thumbnail) {
                         return function(e) {
                             var img = document.createElement('img');
                             img.src = e.target.result;
@@ -255,18 +313,22 @@
                                 ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
                                 var dataurl = canvas.toDataURL("image/png");
                                 thumbnail.children('.image-caption').addClass('image-overlay');
-                                thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="' + escape(file.name) + '"/>'));
+                                thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
                                 thumbnail.spin(false);
                             }
                             delete this;
                         };
-                    })(thumbnail, f);
+                    })(thumbnail);
                     reader.readAsDataURL(f);
                 }
                 // reset file input
                 evt.target.value = null;
 
-                $('#status-pagecount').text($(".thumbnail").length + ' pages');
+                var pageCount = $(".thumbnail").length;
+                if (pageCount > 0) {
+                    $('#pdfbutton').removeClass('disabled');
+                }
+                $('#status-pagecount').text(pageCount + ' pages');
 
                 var totalSize = 0;
                 $(".thumbnail").each(function() {
@@ -277,18 +339,29 @@
             }
 
             function createPDF() {
+                var dpi = 300;  // TODO: maybe make this an option
+
                 var pdf = jsPDF('l', 'in', 'a4');
                 pdf.deletePage(1);
 
-                $(".thumbnail").each(function() {
-                    var DPI = 300;  // TODO: option
-                    var width = $(this).data('width') / DPI;
-                    var height = $(this).data('height') / DPI;
-                    var imagedata = $(this).data('imagedata');
-                    pdf.addPage([width, height]);
-                    pdf.addImage(imagedata, 'jpg', 0, 0, width, height);
+                var title = $('#pdfTitle').val();
+                pdf.setProperties({
+                    title: title,
+                    subject: $('#pdfSubject').val(),
+                    author: $('#pdfAuthor').val(),
+                    creator: 'flesser.github.io/pic2pdf'
                 });
-                pdf.save('output.pdf');
+
+                $(".thumbnail").each(function() {
+                    var width = $(this).data('width') / dpi;
+                    var height = $(this).data('height') / dpi;
+                    var imageData = $(this).data('imagedata');
+                    pdf.addPage([width, height]);
+                    var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
+                    pdf.addImage(imageData, imageFormat, 0, 0, width, height);
+                });
+                var filename = (title || 'output') + '.pdf';
+                pdf.save(filename);
             }
 
             $(document).ready(function() {
@@ -312,7 +385,11 @@
                         }
                     }
                 });
-                $('#pdfbutton').click(createPDF);
+                $('#pdfbutton').click(function() {
+                    if (!$(this).hasClass('disabled')) {
+                        createPDF();
+                    }
+                });
             });
         </script>
     </body>
