@@ -18,7 +18,8 @@
         <title>Convert pictures to PDF</title>
 
         <!-- Bootstrap core CSS -->
-        <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootstrap.min.css">
+        <!-- <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootstrap.min.css"> -->
+        <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootswatch-paper.min.css">
 
         <!-- pics2pdf.css -->
         <link rel="stylesheet" href="pics2pdf.css">
@@ -34,13 +35,13 @@
                 </span>
 
                 <div class="btn-group navbar-nav">
-                    <button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#optionsModal">
+                    <button type="button" class="btn btn-info navbar-btn" data-toggle="modal" data-target="#optionsModal">
                         <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
                         Edit PDF Options
                     </button>
                 </div>
 
-                <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav disabled">
+                <button type="button" id="pdfbutton" class="btn btn-success navbar-btn navbar-nav disabled">
                     <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
                     Create PDF
                 </button>
@@ -50,14 +51,14 @@
         <div class="container-fluid">
             <div id="welcome">
                 <h1>pics2pdf.js <small>Convert pictures to multi-paged PDF</small></h1>
-                <p>Add some pictures and drag them in the right order.</p>
+                <p class="lead">Add some pictures and drag them in the right order.</p>
                 <p>If you have very large pictures, you can edit the PDF options to reduce them in size.<br>
                 This will give you smaller PDF files e.g. if you want to send them by e-mail.</p>
                 <p>You can also specify a document title and author in the PDF options.</p>
-                <p>Once you're done, click "Create PDF".</p>
+                <p class="lead">Once you're done, click "Create PDF".</p>
                 <p>All the magic happens locally in your web browser on your device.<br>
                 No data is uploaded. This will save your bandwith and privacy.</p>
-                <p>If you want to know the technical details, head over to
+                <p class="lead">If you want to know the technical details, head over to
                 <a href="https://github.com/flesser/pics2pdf">GitHub</a>.</p>
             </div>
             <div class="row" id="image-row"></div>
@@ -71,39 +72,47 @@
                         <h4 class="modal-title" id="optionsModalLabel">Edit PDF Options</h4>
                     </div>
                     <div class="modal-body">
-                        <form>
-                            <div class="form-group">
-                                <label for="pdfTitle">Title</label>
-                                <input type="text" class="form-control" id="pdfTitle" placeholder="Document Title">
-                            </div>
-                            <div class="form-group">
-                                <label for="pdfSubject">Subject</label>
-                                <input type="text" class="form-control" id="pdfSubject" placeholder="This is the subject">
-                            </div>
-                            <div class="form-group">
-                                <label for="pdfAuthor">Author</label>
-                                <input type="text" class="form-control" id="pdfAuthor" placeholder="John Doe">
-                            </div>
-                        </form>
-                        <hr>
                         <form class="form-horizontal">
-                            <label>File size reduction</label>
-                            <div class="radio col-sm-12">
-                                <label>
-                                    <input type="radio" name="resizeRadios" id="dontResize" value="0" checked>
-                                    keep original picture size
-                                </label>
-                            </div>
-                            <div class="radio col-sm-8">
-                                <label class="radio-inline">
-                                    <input type="radio" name="resizeRadios" id="doResize" value="1">
-                                    reduce pictures to a maximum width/height of
-                                </label>
-                            </div>
-                            <div class="input-group input-sm col-sm-4">
-                                <input type="number" class="form-control" id="maxImageSize" value="1000">
-                                <div class="input-group-addon">px</div>
-                            </div>
+                            <fieldset>
+                                <legend>Metadata</legend>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label" for="pdfTitle">Title:</label>
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" id="pdfTitle" placeholder="Document Title">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label" for="pdfSubject">Subject:</label>
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" id="pdfSubject" placeholder="This is the subject">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label" for="pdfAuthor">Author:</label>
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" id="pdfAuthor" placeholder="John Doe">
+                                    </div>
+                                </div>
+                            </fieldset>
+                            <fieldset>
+                                <legend>File size reduction</legend>
+                                <div class="radio col-sm-12">
+                                    <label>
+                                        <input type="radio" name="resizeRadios" id="dontResize" value="0" checked>
+                                        keep original picture size
+                                    </label>
+                                </div>
+                                <div class="radio col-sm-8">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="resizeRadios" id="doResize" value="1">
+                                        reduce pictures to a maximum width/height of
+                                    </label>
+                                </div>
+                                <div class="input-group input-sm col-sm-4">
+                                    <input type="number" class="form-control" id="maxImageSize" value="1000">
+                                    <div class="input-group-addon">px</div>
+                                </div>
+                            </fieldset>
                         </form>
                     </div>
                     <div class="modal-footer">

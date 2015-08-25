@@ -58,9 +58,9 @@ function handleFileSelect(evt) {
         thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
         thumbnail.spin();
 
-        var deleteButton = $('<a title="remove this image" class="image-button-remove" href="#">'
+        var deleteButton = $('<button class="btn btn-danger image-button-remove">'
                                 + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
-                                + '<span class="sr-only">remove</span></a>').appendTo(buttons);
+                                + ' remove</button>').appendTo(buttons);
         deleteButton.click(function() {
             $(this).parent().parent().parent().fadeOut('', function() {
                 $(this).next('.clear').remove();  // remove clear helper
