@@ -13,123 +13,15 @@
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootstrap.min.css">
 
-        <style type="text/css">
-            /* http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
-            .btn-file {
-                position: relative;
-                overflow: hidden;
-            }
-            .btn-file input[type=file] {
-                position: absolute;
-                top: 0;
-                right: 0;
-                min-width: 100%;
-                min-height: 100%;
-                font-size: 100px;
-                text-align: right;
-                filter: alpha(opacity=0);
-                opacity: 0;
-                outline: none;
-                background: white;
-                cursor: inherit;
-                display: block;
-            }
-
-            /* clearfix helpers for mixed column heights. http://stackoverflow.com/a/24590544 */
-            /* xs: 2 columns */
-            @media (max-width: 767px) {
-                #image-row>.clear:nth-child(4n)::before { content: ''; display: table; clear: both; }
-            }
-            /* sm: 3 columns */
-            @media (min-width: 768px) and (max-width: 991px) {
-                #image-row>.clear:nth-child(6n)::before { content: ''; display: table; clear: both; }
-            }
-            /* md: 4 columns */
-            @media (min-width: 992px) and (max-width: 1199px) {
-                #image-row>.clear:nth-child(8n)::before { content: ''; display: table; clear: both; }
-            }
-            /* lg: 6 columns */
-            @media (min-width: 1200px) {
-                #image-row>.clear:nth-child(12n)::before { content: ''; display: table; clear: both; }
-            }
-
-            /* image overlays */
-            .image-overlay {
-                background-color: #000;
-                color: #fff;
-                opacity: 0;
-                position: absolute;
-                margin: 4px;
-                -webkit-transition: all 300ms ease-out;
-                -moz-transition: all 300ms ease-out;
-                -o-transition: all 300ms ease-out;
-                -ms-transition: all 300ms ease-out;
-                transition: all 300ms ease-out;
-            }
-            .image-caption {
-                bottom: 0;
-                left: 0;
-                width: calc(100% - 8px);
-                padding-bottom: 4px;
-            }
-            .image-buttons {
-                top: 0;
-                right: 0;
-                padding: 4px;
-                font-size: 200%;
-            }
-            .image-button-remove {
-                color: red;
-            }
-            .thumbnail {
-                position: relative;
-                min-height: 100px;
-                cursor: move;
-            }
-            .thumbnail:focus .image-overlay,
-            .thumbnail:hover .image-overlay {
-                opacity: 0.75
-            }
-
-            /* dropdown settings */
-            .dropdown-menu li .glyphicon {
-                display: none;
-            }
-
-            .dropdown-menu li.selected .glyphicon {
-                display: inline-block;
-            }
-
-            .dropdown-menu li.selected a {
-                font-weight: bold;
-            }
-
-            /* keep navbar horizontal even in xs mode */
-            .navbar-text,
-            .navbar-nav,
-            .navbar-nav > li {
-                float: left !important;
-            }
-            .navbar-right,
-            .navbar-right > li {
-                float: right !important;
-            }
-            .navbar-text,
-            .navbar-nav {
-                margin-left: 15px;
-                margin-right: 15px;
-            }
-            .navbar .btn-group {
-                margin: 0;
-            }
-        </style>
+        <!-- pics2pdf.css -->
+        <link rel="stylesheet" href="pics2pdf.css">
     </head>
 
     <body style="padding-top: 70px; padding-bottom: 70px;">
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <span class="navbar-brand hidden-xs">pic2pdf.js</a>
+                    <span class="navbar-brand hidden-xs">pics2pdf.js</a>
                 </div>
 
                 <span class="btn btn-primary navbar-btn btn-file navbar-nav">
@@ -141,7 +33,7 @@
                 <div class="btn-group navbar-nav">
                     <button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#optionsModal">
                         <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
-                        PDF Options
+                        Edit PDF Options
                     </button>
                 </div>
 
@@ -161,7 +53,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="optionsModalLabel">PDF Options</h4>
+                        <h4 class="modal-title" id="optionsModalLabel">Edit PDF Options</h4>
                     </div>
                     <div class="modal-body">
                         <form>
@@ -213,7 +105,7 @@
                 <p class="navbar-text" id="status-filesize">ca. 0 MB</p>
 
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="https://github.com/flesser/pic2pdf">
+                    <li><a href="https://github.com/flesser/pics2pdf">
                         <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
                         About
                     </a></li>
@@ -236,187 +128,8 @@
         <!-- jsPDF -->
         <script src="3rdparty/jspdf.min.js"></script>
 
-        <!-- pic2pdf.js -->
-        <script type="text/javascript">
-            function fitImage(img, maxLong, maxShort) {
-                maxShort = maxShort || maxLong;
-                if (img.width > img.height) {
-                    if (img.width <= maxLong && img.height <= maxShort) {
-                        // no resizing necessary
-                        return [img.width, img.height];
-                    }
-                    var widthRatio = maxLong / img.width;
-                    var heightRatio = maxShort / img.height;
-                } else {
-                    if (img.height <= maxLong && img.width <= maxShort) {
-                        // no resizing necessary
-                        return [img.width, img.height];
-                    }
-                    var widthRatio = maxShort / img.width;
-                    var heightRatio = maxLong / img.height;
-                }
-
-                var resizeRatio = Math.min(widthRatio, heightRatio);
-
-                return [img.width * resizeRatio, img.height * resizeRatio];
-            }
-
-            function handleFileSelect(evt) {
-                var files = evt.target.files;
-
-                for (var i = 0; i < files.length; i++) {
-                    var f = files[i];
-                    if (!f.type.match('image.*')) continue;
-
-                    var imageContainer = $('<div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container"></div>');
-                    var thumbnail = $('<div class="thumbnail text-center"></div>').appendTo(imageContainer);
-                    var buttons = $('<div class="image-overlay image-buttons"></div>').appendTo(thumbnail);
-                    thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
-                    thumbnail.spin();
-
-                    var deleteButton = $('<a title="remove this image" class="image-button-remove" href="#">'
-                                          + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
-                                          + '<span class="sr-only">remove</span></a>').appendTo(buttons);
-                    deleteButton.click(function() {
-                        $(this).parent().parent().parent().fadeOut('', function() {
-                            $(this).next('.clear').remove();  // remove clear helper
-                            $(this).remove();  // remove image
-                            if ($(".thumbnail").length == 0) {
-                                $('#pdfbutton').addClass('disabled');
-                            }
-                        });
-                    });
-
-                    $('#image-row').append(imageContainer);
-                    $('#image-row').append($('<div class="clear"></div>'));
-
-                    thumbnail.data('filesize', f.size);
-
-                    var reader = new FileReader();
-                    reader.onload = (function(thumbnail) {
-                        return function(e) {
-                            var img = document.createElement('img');
-                            img.src = e.target.result;
-                            thumbnail.data('imagedata', e.target.result);
-                            img.onload = function() {
-                                var canvas = document.createElement('canvas');
-                                var dimensions = fitImage(this, 500);
-                                canvas.width = dimensions[0];
-                                canvas.height = dimensions[1];
-                                canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
-
-                                var dataurl = canvas.toDataURL("image/jpeg");
-                                thumbnail.children('.image-caption').addClass('image-overlay');
-                                thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
-                                thumbnail.spin(false);
-                            }
-                            delete this;
-                        };
-                    })(thumbnail);
-                    reader.readAsDataURL(f);
-                }
-                // reset file input
-                evt.target.value = null;
-
-                var pageCount = $(".thumbnail").length;
-                if (pageCount > 0) {
-                    $('#pdfbutton').removeClass('disabled');
-                }
-                $('#status-pagecount').text(pageCount + ' pages');
-
-                var totalSize = 0;
-                $(".thumbnail").each(function() {
-                    totalSize += $(this).data('filesize');
-                });
-                totalSize /= 1024*1024;
-                $('#status-filesize').text('ca. ' + totalSize.toFixed(1) + ' MB');
-            }
-
-            function createPDF() {
-                var dpi = 300;  // TODO: maybe make this an option
-
-                var pdf = jsPDF('l', 'in', 'a4');
-                pdf.deletePage(1);
-
-                var title = $('#pdfTitle').val();
-                var filename = (title || 'output') + '.pdf';
-                pdf.setProperties({
-                    title: title,
-                    subject: $('#pdfSubject').val(),
-                    author: $('#pdfAuthor').val(),
-                    creator: 'flesser.github.io/pic2pdf'
-                });
-
-                var doResize = ($('input[name="resizeRadios"]:checked').val() == 1);
-                if (doResize) {
-                    var maxSize = parseInt($('#maxImageSize').val());
-                    if (!maxSize) {
-                        // TODO: maybe nicer looking error modal?
-                        alert('Invalid pixel value for image size reduction!\nPlease check again under "PDF Options".');
-                        return;
-                    }
-                }
-
-                var thumbnailCount = $(".thumbnail").length;
-                $(".thumbnail").each(function(i) {
-                    var imageData = $(this).data('imagedata');
-
-                    var img = document.createElement('img');
-                    img.onload = function() {
-                        if (doResize) {
-                            var canvas = document.createElement('canvas');
-                            var dimensions = fitImage(this, maxSize);
-                            canvas.width = dimensions[0];
-                            canvas.height = dimensions[1];
-                            canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
-                            imageData = canvas.toDataURL("image/jpeg");
-                        } else {
-                            var dimensions = [this.width, this.height];
-                        }
-
-                        var pageWidth = dimensions[0] / dpi;
-                        var pageHeight = dimensions[1] / dpi;
-                        pdf.addPage([pageWidth, pageHeight]);
-                        var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
-                        pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
-
-                        if (i == thumbnailCount - 1) {
-                            // last one: save PDF
-                            pdf.save(filename);
-                        }
-                    }
-                    img.src = imageData;
-                });
-            }
-
-            $(document).ready(function() {
-                $('#image-input').bind('change', handleFileSelect);
-                $('#image-row').sortable({
-                    items: "> .image-container",
-                    helper: 'clone',
-                    placeholder: 'col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container',
-                    start: function(e, ui) {
-                        // remove old clearfix helper
-                        ui.item.next().next('.clear').remove();
-                    },
-                    stop: function(e, ui) {
-                        // create new clearfix helper
-                        if(ui.item.prev('.clear').length > 0) {
-                            // dropped after clearfix helper --> create new one after
-                            ui.item.after($('<div class="clear"></div>'));
-                        } else if(ui.item.next('.clear').length > 0) {
-                            // dropped before clearfix helper --> create new one before
-                            ui.item.before($('<div class="clear"></div>'));
-                        }
-                    }
-                });
-                $('#pdfbutton').click(function() {
-                    if (!$(this).hasClass('disabled')) {
-                        createPDF();
-                    }
-                });
-            });
-        </script>
+        <!-- pics2pdf.js -->
+        <script src="pics2pdf.js"></script>
     </body>
 </html>
 
