@@ -4,11 +4,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Convert multiple images into one multi-paged PDF file. Optionally resize images.">
+        <meta name="description" content="Convert multiple pictures into one multi-paged PDF file. Optionally resize pictures.">
         <meta name="author" content="Florian Eßer">
         <link rel="icon" href="favicon.ico">
 
-        <title>pic2pdf.js</title>
+        <title>Convert pictures to PDF</title>
 
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootstrap.min.css">
@@ -126,7 +126,6 @@
     </head>
 
     <body style="padding-top: 70px; padding-bottom: 70px;">
-        <!-- Fixed navbar -->
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -135,7 +134,7 @@
 
                 <span class="btn btn-primary navbar-btn btn-file navbar-nav">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                    Add Images
+                    Add Pictures
                     <input type="file" id="image-input" name="images[]" accept="image/*" multiple />
                 </span>
 
@@ -185,13 +184,13 @@
                             <div class="radio col-sm-12">
                                 <label>
                                     <input type="radio" name="resizeRadios" id="dontResize" value="0" checked>
-                                    keep original image size
+                                    keep original picture size
                                 </label>
                             </div>
                             <div class="radio col-sm-8">
                                 <label class="radio-inline">
                                     <input type="radio" name="resizeRadios" id="doResize" value="1">
-                                    reduce images to a maximum width/height of
+                                    reduce pictures to a maximum width/height of
                                 </label>
                             </div>
                             <div class="input-group input-sm col-sm-4">
