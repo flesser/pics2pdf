@@ -67,6 +67,7 @@ function handleFileSelect(evt) {
                 $(this).remove();  // remove image
                 if ($(".thumbnail").length == 0) {
                     $('#pdfbutton').addClass('disabled');
+                    $('#welcome').fadeIn();
                 }
             });
         });
@@ -104,6 +105,7 @@ function handleFileSelect(evt) {
 
     var pageCount = $(".thumbnail").length;
     if (pageCount > 0) {
+        $('#welcome').slideUp();
         $('#pdfbutton').removeClass('disabled');
     }
     $('#status-pagecount').text(pageCount + ' pages');

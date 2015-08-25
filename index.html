@@ -6,7 +6,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="Convert multiple pictures into one multi-paged PDF file. Optionally resize pictures.">
         <meta name="author" content="Florian Eßer">
-        <link rel="icon" href="favicon.ico">
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+
+        <link rel="icon" href="icons/pics2pdf-32.png">
+        <link rel="apple-touch-icon" href="icons/pics2pdf-60.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="icons/pics2pdf-76.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="icons/pics2pdf-120.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="icons/pics2pdf-152.png">
 
         <title>Convert pictures to PDF</title>
 
@@ -20,10 +27,6 @@
     <body style="padding-top: 70px; padding-bottom: 70px;">
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
-                <div class="navbar-header">
-                    <span class="navbar-brand hidden-xs">pics2pdf.js</a>
-                </div>
-
                 <span class="btn btn-primary navbar-btn btn-file navbar-nav">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     Add Pictures
@@ -45,6 +48,18 @@
         </nav>
 
         <div class="container-fluid">
+            <div id="welcome">
+                <h1>pics2pdf.js <small>Convert pictures to multi-paged PDF</small></h1>
+                <p>Add some pictures and drag them in the right order.</p>
+                <p>If you have very large pictures, you can edit the PDF options to reduce them in size.<br>
+                This will give you smaller PDF files e.g. if you want to send them by e-mail.</p>
+                <p>You can also specify a document title and author in the PDF options.</p>
+                <p>Once you're done, click "Create PDF".</p>
+                <p>All the magic happens locally in your web browser on your device.<br>
+                No data is uploaded. This will save your bandwith and privacy.</p>
+                <p>If you want to know the technical details, head over to
+                <a href="https://github.com/flesser/pics2pdf">GitHub</a>.</p>
+            </div>
             <div class="row" id="image-row"></div>
         </div>
 
@@ -112,7 +127,6 @@
                 </ul>
             </div>
         </footer>
-
 
         <!-- JQuery & Bootstrap JS -->
         <script src="3rdparty/jquery.min.js"></script>
