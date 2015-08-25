@@ -78,27 +78,32 @@
                 padding: 4px;
                 font-size: 200%;
             }
+            .image-button-remove {
+                color: red;
+            }
             .thumbnail {
                 position: relative;
                 min-height: 100px;
             }
             .thumbnail:focus .image-overlay,
             .thumbnail:hover .image-overlay {
-                opacity: 0.5
+                opacity: 0.75
             }
 
             /* keep the footer horizontal even in xs mode */
-            footer .navbar-text,
-            footer .navbar-nav,
-            footer .navbar-nav > li {
+            .navbar-text,
+            .navbar-nav,
+            .navbar-nav > li {
                 float: left !important;
             }
-            footer .navbar-right,
-            footer .navbar-right > li {
+            .navbar-right,
+            .navbar-right > li {
                 float: right !important;
             }
-            footer .navbar-text {
-                margin: 15px;
+            .navbar-text,
+            .navbar-btn {
+                margin-left: 15px;
+                margin-right: 15px;
             }
         </style>
     </head>
@@ -107,23 +112,17 @@
         <!-- Fixed navbar -->
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#">pic2pdf.js</a>
-                </div>
-                <div id="navbar" class="navbar-collapse collapse">
 
-                    <p class="navbar-text">Step 1:</p>
-                    <span class="btn btn-primary navbar-btn btn-file navbar-nav">
-                        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                        Add Images
-                        <input type="file" id="image-input" name="images[]" accept="image/*" multiple />
-                    </span>
+                <div class="navbar-header">
+                    <span class="navbar-brand hidden-xs">pic2pdf.js</a>
+                </div>
+
+                <p class="navbar-text">Step 1:</p>
+                <span class="btn btn-primary navbar-btn btn-file navbar-nav">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                    Add Images
+                    <input type="file" id="image-input" name="images[]" accept="image/*" multiple />
+                </span>
 
 <!--                    <p class="navbar-text">Step 2:</p>
                     <div class="btn-group navbar-nav">
@@ -141,12 +140,11 @@
                         </ul>
                     </div>-->
 
-                    <p class="navbar-text">Step 2:</p>
-                    <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav">
-                        <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-                        Create PDF
-                    </button>
-                </div><!--/.nav-collapse -->
+                <p class="navbar-text">Step 2:</p>
+                <button type="button" id="pdfbutton" class="btn btn-danger navbar-btn navbar-nav">
+                    <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                    Create PDF
+                </button>
             </div>
         </nav>
 
@@ -161,7 +159,7 @@
                 <p class="navbar-text" id="status-filesize">ca. 0 MB</p>
 
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="https://github.com/flesser/flesser.github.io">
+                    <li><a href="https://flesser.github.io/pic2pdf/">
                         <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
                         About
                     </a></li>
@@ -222,7 +220,7 @@
                     thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
                     thumbnail.spin();
 
-                    var deleteButton = $('<a title="remove" href="#">'
+                    var deleteButton = $('<a title="remove this image" class="image-button-remove" href="#">'
                                           + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
                                           + '<span class="sr-only">remove</span></a>').appendTo(buttons);
                     deleteButton.click(function() {
