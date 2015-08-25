@@ -179,26 +179,26 @@
                                 <input type="text" class="form-control" id="pdfAuthor" placeholder="John Doe">
                             </div>
                         </form>
-<!--                        <hr>
-                        <form>
+                        <hr>
+                        <form class="form-horizontal">
                             <label>File size reduction</label>
-                            <div class="radio">
+                            <div class="radio col-sm-12">
                                 <label>
-                                    <input type="radio" name="resizeRadios" value="false" checked>
+                                    <input type="radio" name="resizeRadios" id="dontResize" value="0" checked>
                                     keep original image size
                                 </label>
                             </div>
-                            <div class="radio">
-                                <label>
-                                    <input type="radio" name="resizeRadios" value="true">
+                            <div class="radio col-sm-8">
+                                <label class="radio-inline">
+                                    <input type="radio" name="resizeRadios" id="doResize" value="1">
                                     reduce images to a maximum width/height of
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="maxImageSize" value="1000">
-                                        <div class="input-group-addon">px</div>
-                                    </div>
                                 </label>
                             </div>
-                        </form>-->
+                            <div class="input-group input-sm col-sm-4">
+                                <input type="number" class="form-control" id="maxImageSize" value="1000">
+                                <div class="input-group-addon">px</div>
+                            </div>
+                        </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
@@ -301,17 +301,12 @@
                             thumbnail.data('imagedata', e.target.result);
                             img.onload = function() {
                                 var canvas = document.createElement('canvas');
-
-                                thumbnail.data('width', this.width);
-                                thumbnail.data('height', this.height);
-
                                 var dimensions = fitImage(this, 500);
                                 canvas.width = dimensions[0];
                                 canvas.height = dimensions[1];
+                                canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
 
-                                var ctx = canvas.getContext("2d");
-                                ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
-                                var dataurl = canvas.toDataURL("image/png");
+                                var dataurl = canvas.toDataURL("image/jpeg");
                                 thumbnail.children('.image-caption').addClass('image-overlay');
                                 thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
                                 thumbnail.spin(false);
@@ -345,6 +340,7 @@
                 pdf.deletePage(1);
 
                 var title = $('#pdfTitle').val();
+                var filename = (title || 'output') + '.pdf';
                 pdf.setProperties({
                     title: title,
                     subject: $('#pdfSubject').val(),
@@ -352,16 +348,46 @@
                     creator: 'flesser.github.io/pic2pdf'
                 });
 
-                $(".thumbnail").each(function() {
-                    var width = $(this).data('width') / dpi;
-                    var height = $(this).data('height') / dpi;
+                var doResize = ($('input[name="resizeRadios"]:checked').val() == 1);
+                if (doResize) {
+                    var maxSize = parseInt($('#maxImageSize').val());
+                    if (!maxSize) {
+                        // TODO: maybe nicer looking error modal?
+                        alert('Invalid pixel value for image size reduction!\nPlease check again under "PDF Options".');
+                        return;
+                    }
+                }
+
+                var thumbnailCount = $(".thumbnail").length;
+                $(".thumbnail").each(function(i) {
                     var imageData = $(this).data('imagedata');
-                    pdf.addPage([width, height]);
-                    var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
-                    pdf.addImage(imageData, imageFormat, 0, 0, width, height);
+
+                    var img = document.createElement('img');
+                    img.onload = function() {
+                        if (doResize) {
+                            var canvas = document.createElement('canvas');
+                            var dimensions = fitImage(this, maxSize);
+                            canvas.width = dimensions[0];
+                            canvas.height = dimensions[1];
+                            canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+                            imageData = canvas.toDataURL("image/jpeg");
+                        } else {
+                            var dimensions = [this.width, this.height];
+                        }
+
+                        var pageWidth = dimensions[0] / dpi;
+                        var pageHeight = dimensions[1] / dpi;
+                        pdf.addPage([pageWidth, pageHeight]);
+                        var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
+                        pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
+
+                        if (i == thumbnailCount - 1) {
+                            // last one: save PDF
+                            pdf.save(filename);
+                        }
+                    }
+                    img.src = imageData;
                 });
-                var filename = (title || 'output') + '.pdf';
-                pdf.save(filename);
             }
 
             $(document).ready(function() {
