@@ -45,77 +45,95 @@ function fitImage(img, maxLong, maxShort) {
 /**********************************************************************************************************************/
 
 
+function getImageFromFile(f, next) {
+    var imageContainer = $('<div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container"></div>');
+    var thumbnail = $('<div class="thumbnail text-center"></div>').appendTo(imageContainer);
+    var buttons = $('<div class="image-overlay image-buttons"></div>').appendTo(thumbnail);
+    thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
+    thumbnail.spin();
+
+    var deleteButton = $('<button class="btn btn-danger image-button-remove">'
+    + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
+    + ' remove</button>').appendTo(buttons);
+    deleteButton.click(function() {
+        $(this).parent().parent().parent().fadeOut('', function() {
+            $(this).next('.clear').remove();  // remove clear helper
+            $(this).remove();  // remove image
+            if ($(".thumbnail").length == 0) {
+                $('#pdfbutton').addClass('disabled');
+                $('#welcome').fadeIn();
+            }
+        });
+    });
+
+    $('#image-row').append(imageContainer);
+    $('#image-row').append($('<div class="clear"></div>'));
+
+    thumbnail.data('filesize', f.size);
+
+    var reader = new FileReader();
+    reader.onload = (function(thumbnail) {
+        return function(e) {
+            var img = document.createElement('img');
+            img.src = e.target.result;
+            thumbnail.data('imagedata', e.target.result);
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var dimensions = fitImage(this, 500);
+                canvas.width = dimensions[0];
+                canvas.height = dimensions[1];
+                canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+
+                var dataurl = canvas.toDataURL("image/jpeg");
+                thumbnail.children('.image-caption').addClass('image-overlay');
+                thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
+                thumbnail.spin(false);
+                next();
+            }
+            delete this;
+        };
+    })(thumbnail);
+    reader.readAsDataURL(f);
+}
+
+function createFileReaderTask(file){
+    return function(next){
+        getImageFromFile(file, next);
+    }
+}
+
+
+/**********************************************************************************************************************/
+
+
 function handleFileSelect(evt) {
     var files = evt.target.files;
 
+    var pageCount = 0;
     for (var i = 0; i < files.length; i++) {
         var f = files[i];
         if (!f.type.match('image.*')) continue;
-
-        var imageContainer = $('<div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container"></div>');
-        var thumbnail = $('<div class="thumbnail text-center"></div>').appendTo(imageContainer);
-        var buttons = $('<div class="image-overlay image-buttons"></div>').appendTo(thumbnail);
-        thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
-        thumbnail.spin();
-
-        var deleteButton = $('<button class="btn btn-danger image-button-remove">'
-                                + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
-                                + ' remove</button>').appendTo(buttons);
-        deleteButton.click(function() {
-            $(this).parent().parent().parent().fadeOut('', function() {
-                $(this).next('.clear').remove();  // remove clear helper
-                $(this).remove();  // remove image
-                if ($(".thumbnail").length == 0) {
-                    $('#pdfbutton').addClass('disabled');
-                    $('#welcome').fadeIn();
-                }
-            });
-        });
-
-        $('#image-row').append(imageContainer);
-        $('#image-row').append($('<div class="clear"></div>'));
-
-        thumbnail.data('filesize', f.size);
-
-        var reader = new FileReader();
-        reader.onload = (function(thumbnail) {
-            return function(e) {
-                var img = document.createElement('img');
-                img.src = e.target.result;
-                thumbnail.data('imagedata', e.target.result);
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var dimensions = fitImage(this, 500);
-                    canvas.width = dimensions[0];
-                    canvas.height = dimensions[1];
-                    canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
-
-                    var dataurl = canvas.toDataURL("image/jpeg");
-                    thumbnail.children('.image-caption').addClass('image-overlay');
-                    thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
-                    thumbnail.spin(false);
-                }
-                delete this;
-            };
-        })(thumbnail);
-        reader.readAsDataURL(f);
+        $(document).queue('fileReaderTasks', createFileReaderTask(f));
+        pageCount++;
     }
-    // reset file input
-    evt.target.value = null;
-
-    var pageCount = $(".thumbnail").length;
     if (pageCount > 0) {
         $('#welcome').slideUp();
-        $('#pdfbutton').removeClass('disabled');
     }
     $('#status-pagecount').text(pageCount + ' pages');
 
-    var totalSize = 0;
-    $(".thumbnail").each(function() {
-        totalSize += $(this).data('filesize');
+    $(document).queue('fileReaderTasks', function() {
+        // reset file input
+        evt.target.value = null;
+        $('#pdfbutton').removeClass('disabled');
+
+        var totalSize = 0;
+        $(".thumbnail").each(function() {
+            totalSize += $(this).data('filesize');
+        });
+        totalSize /= 1024*1024;
+        $('#status-filesize').text('ca. ' + totalSize.toFixed(1) + ' MB');
     });
-    totalSize /= 1024*1024;
-    $('#status-filesize').text('ca. ' + totalSize.toFixed(1) + ' MB');
+    $(document).dequeue('fileReaderTasks');
 }
 
 
