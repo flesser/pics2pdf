@@ -172,7 +172,15 @@ function createPDF() {
 
             if (i == thumbnailCount - 1) {
                 // last one: save PDF
-                pdf.save(filename);
+                var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
+                if (isSafari) {
+                    // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
+                    // open inline instead
+                    pdf.output('dataurl');
+                } else {
+                    // create a nice download with file name
+                    pdf.save(filename);
+                }
             }
         }
         img.src = imageData;
