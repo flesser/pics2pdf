@@ -1,3 +1,9 @@
+/* body */
+body {
+    padding-top: 70px;
+    padding-bottom: 30px;
+}
+
 /* file upload styling
  * http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
 .btn-file {
@@ -107,4 +113,17 @@
 }
 .navbar .btn-group {
     margin: 0;
+}
+
+/* footer height */
+footer .navbar-text {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+footer .navbar-nav > li > a {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+footer.navbar {
+    min-height: 30px !important;
 }
