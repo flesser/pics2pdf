@@ -172,7 +172,7 @@ function createPDF() {
 
             if (i == thumbnailCount - 1) {
                 // last one: save PDF
-                var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
+                var isSafari = /^((?!chrome).)*((safari)|(mobile\/))/i.test(navigator.userAgent);
                 if (isSafari) {
                     // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
                     // open inline instead
