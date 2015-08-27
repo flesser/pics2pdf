@@ -123,67 +123,85 @@ function handleFileSelect(evt) {
 
 
 function createPDF() {
-    var dpi = 300;  // TODO: maybe make this an option
-
-    var pdf = jsPDF('l', 'in', 'a4');
-    pdf.deletePage(1);
-
-    var title = $('#pdfTitle').val();
-    var filename = (title || 'output') + '.pdf';
-    pdf.setProperties({
-        title: title,
-        subject: $('#pdfSubject').val(),
-        author: $('#pdfAuthor').val(),
-        creator: 'flesser.github.io/pics2pdf'
+    $('#pdfbutton').addClass('disabled');
+    $('#progress-modal').modal({
+        backdrop: 'static',
+        keyboard: false
     });
+    $('#progress-modal').on('shown.bs.modal', function() {
+        var progressBar = $('#progress-bar');
+        var progressLabel = $('#progress-label');
+        progressBar.width('0%');
+        progressLabel.text("preparing...");
 
-    var doResize = ($('input[name="resizeRadios"]:checked').val() == 1);
-    if (doResize) {
-        var maxSize = parseInt($('#maxImageSize').val());
-        if (!maxSize) {
-            // TODO: maybe nicer looking error modal?
-            alert('Invalid pixel value for image size reduction!\nPlease check again under "Edit PDF Options".');
-            return;
-        }
-    }
+        var dpi = 300;  // TODO: maybe make this an option
 
-    var thumbnailCount = $(".thumbnail").length;
-    $(".thumbnail").each(function(i) {
-        var imageData = $(this).data('imagedata');
+        var pdf = jsPDF('l', 'in', 'a4');
+        pdf.deletePage(1);
 
-        var img = document.createElement('img');
-        img.onload = function() {
-            if (doResize) {
-                var canvas = document.createElement('canvas');
-                var dimensions = fitImage(this, maxSize);
-                canvas.width = dimensions[0];
-                canvas.height = dimensions[1];
-                canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
-                imageData = canvas.toDataURL("image/jpeg");
-            } else {
-                var dimensions = [this.width, this.height];
+        var title = $('#pdfTitle').val();
+        var filename = (title || 'output') + '.pdf';
+        pdf.setProperties({
+            title: title,
+            subject: $('#pdfSubject').val(),
+            author: $('#pdfAuthor').val(),
+            creator: 'flesser.github.io/pics2pdf'
+        });
+
+        var doResize = ($('input[name="resizeRadios"]:checked').val() == 1);
+        if (doResize) {
+            var maxSize = parseInt($('#maxImageSize').val());
+            if (!maxSize) {
+                // TODO: maybe nicer looking error modal?
+                alert('Invalid pixel value for image size reduction!\nPlease check again under "Edit PDF Options".');
+                return;
             }
+        }
 
-            var pageWidth = dimensions[0] / dpi;
-            var pageHeight = dimensions[1] / dpi;
-            pdf.addPage([pageWidth, pageHeight]);
-            var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
-            pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
+        var pageCount = $(".thumbnail").length;
+        $(".thumbnail").each(function(i) {
+            progressBar.width((i+1) / pageCount * 100 + '%');
+            progressLabel.text("Page " + (i+1) + " of " + pageCount);
 
-            if (i == thumbnailCount - 1) {
-                // last one: save PDF
-                var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
-                if (isSafari) {
-                    // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
-                    // open inline instead
-                    pdf.output('dataurl');
+            var imageData = $(this).data('imagedata');
+
+            var img = document.createElement('img');
+            img.onload = function() {
+                if (doResize) {
+                    var canvas = document.createElement('canvas');
+                    var dimensions = fitImage(this, maxSize);
+                    canvas.width = dimensions[0];
+                    canvas.height = dimensions[1];
+                    canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+                    imageData = canvas.toDataURL("image/jpeg");
                 } else {
-                    // create a nice download with file name
-                    pdf.save(filename);
+                    var dimensions = [this.width, this.height];
+                }
+
+                var pageWidth = dimensions[0] / dpi;
+                var pageHeight = dimensions[1] / dpi;
+                pdf.addPage([pageWidth, pageHeight]);
+                var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
+                pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
+
+                if (i == pageCount - 1) {
+                    // last one: save PDF
+                    var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
+                    if (isSafari) {
+                        // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
+                        // open inline instead
+                        pdf.output('dataurl');
+                    } else {
+                        // create a nice download with file name
+                        pdf.save(filename);
+                    }
+                    $('#pdfbutton').removeClass('disabled');
+                    $('#progress-modal').modal('hide');
+                    progressBar.width('0%');
                 }
             }
-        }
-        img.src = imageData;
+            img.src = imageData;
+        });
     });
 }
 
