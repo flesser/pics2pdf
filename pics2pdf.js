@@ -45,6 +45,32 @@ function fitImage(img, maxLong, maxShort) {
 /**********************************************************************************************************************/
 
 
+function rotateThumbnail(thumbnail, direction) {
+    $('.image-button-rotate').addClass('disabled');
+    thumbnail.spin({direction: direction});
+    thumbnail.data('rotation', ((thumbnail.data('rotation') || 0) + direction + 4) % 4);
+
+    var img = thumbnail.children('img')[0];
+    var canvas = document.createElement('canvas');
+
+    canvas.width = img.naturalHeight;
+    canvas.height = img.naturalWidth;
+    var context = canvas.getContext("2d");
+    context.translate(canvas.width/2, canvas.height/2);
+    context.rotate(direction * Math.PI/2);
+    context.drawImage(img, -canvas.height/2, -canvas.width/2);
+
+    img.src = canvas.toDataURL("image/jpeg");
+    img.onload = function() {
+        thumbnail.spin(false);
+        $('.image-button-rotate').removeClass('disabled');
+    }
+}
+
+
+/**********************************************************************************************************************/
+
+
 function getImageFromFile(f, next) {
     var imageContainer = $('<div class="col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container"></div>');
     var thumbnail = $('<div class="thumbnail text-center"></div>').appendTo(imageContainer);
@@ -52,9 +78,20 @@ function getImageFromFile(f, next) {
     thumbnail.append($('<p class="image-caption">' + f.name + '</p>'));
     thumbnail.spin();
 
-    var deleteButton = $('<button class="btn btn-danger image-button-remove">'
-                            + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
-                            + ' remove</button>').appendTo(buttons);
+    var rotateLeftButton = $('<button class="btn btn-default image-button-rotate image-button-rotate-left" title="rotate left">'
+    + '<i class="fa fa-rotate-left" aria-hidden="true"></i></button>').appendTo(buttons);
+    rotateLeftButton.click(function() {
+        rotateThumbnail(thumbnail, -1);
+    });
+
+    var rotateRightButton = $('<button class="btn btn-default image-button-rotate image-button-rotate-right" title="rotate right">'
+    + '<i class="fa fa-rotate-right" aria-hidden="true"></i></button>').appendTo(buttons);
+    rotateRightButton.click(function() {
+        rotateThumbnail(thumbnail, 1);
+    });
+
+    var deleteButton = $('<button class="btn btn-danger image-button-remove" title="remove">'
+    + '<i class="fa fa-trash-o" aria-hidden="true"></i></button>').appendTo(buttons);
     deleteButton.click(function() {
         $(this).parent().parent().parent().fadeOut('', function() {
             $(this).next('.clear').remove();  // remove clear helper
@@ -138,7 +175,7 @@ function handleFileSelect(evt) {
         // reset file input
         evt.target.value = null;
         $('#pdfbutton').removeClass('disabled');
-        $('#pdfbutton').html('<span class="glyphicon glyphicon-file" aria-hidden="true"></span> Create PDF');
+        $('#pdfbutton').html('<i class="fa fa-file-pdf-o" aria-hidden="true"></i> Create PDF');
 
         var totalSize = 0;
         $(".thumbnail").each(function() {
@@ -154,7 +191,9 @@ function handleFileSelect(evt) {
 /**********************************************************************************************************************/
 
 
-function addPdfPage(pdf, imageData, maxSize, next) {
+function addPdfPage(pdf, thumbnail, maxSize, next) {
+    var imageData = thumbnail.data('imagedata');
+    var rotation = thumbnail.data('rotation') || 0;
     var pageCount = $('.thumbnail').length;
     var currentPage = (pageCount - $(document).queue("pdfPageTasks").length) + 1;
     var percent = currentPage / pageCount * 100;
@@ -165,31 +204,35 @@ function addPdfPage(pdf, imageData, maxSize, next) {
 
     var img = document.createElement('img');
     img.onload = function() {
-        if (maxSize > 0) {
+        if (maxSize < Infinity || rotation != 0) {
+            // resize and/or rotate
             var canvas = document.createElement('canvas');
             var dimensions = fitImage(this, maxSize);
-            canvas.width = dimensions[0];
-            canvas.height = dimensions[1];
-            canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+            canvas.width = dimensions[rotation % 2];
+            canvas.height = dimensions[(rotation + 1) % 2];
+            var context = canvas.getContext("2d");
+            context.translate(canvas.width/2, canvas.height/2);
+            context.rotate(rotation * Math.PI/2);
+            context.drawImage(this, -dimensions[0]/2, -dimensions[1]/2, dimensions[0], dimensions[1]);
             imageData = canvas.toDataURL("image/jpeg");
         } else {
+            // don't resize or rotate
             var dimensions = [this.width, this.height];
         }
 
         var dpi = 300;  // TODO: maybe make this an option
-        var pageWidth = dimensions[0] / dpi;
-        var pageHeight = dimensions[1] / dpi;
+        var pageWidth = dimensions[rotation % 2] / dpi;
+        var pageHeight = dimensions[(rotation + 1) % 2] / dpi;
         pdf.addPage([pageWidth, pageHeight]);
-        var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
-        pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
-        next()
+        pdf.addImage(imageData, 'jpeg', 0, 0, pageWidth, pageHeight);
+        next();
     }
     img.src = imageData;
 }
 
-function createPdfPageTask(pdf, imageData, maxSize) {
+function createPdfPageTask(pdf, thumbnail, maxSize) {
     return function(next) {
-        addPdfPage(pdf, imageData, maxSize, next);
+        addPdfPage(pdf, thumbnail, maxSize, next);
     }
 }
 
@@ -219,8 +262,8 @@ function createPDF() {
     pdf.setProperties({
         title: title,
         subject: $('#pdfSubject').val(),
-        author: $('#pdfAuthor').val(),
-        creator: 'flesser.github.io/pics2pdf'
+                      author: $('#pdfAuthor').val(),
+                      creator: 'flesser.github.io/pics2pdf'
     });
 
     // should we resize images?
@@ -232,12 +275,12 @@ function createPDF() {
             return;
         }
     } else {
-        maxSize = -1;
+        maxSize = Infinity;
     }
 
     // queue page generation
     $(".thumbnail").each(function(i) {
-        $(document).queue('pdfPageTasks', createPdfPageTask(pdf, $(this).data('imagedata'), maxSize));
+        $(document).queue('pdfPageTasks', createPdfPageTask(pdf, $(this), maxSize));
     });
 
     // once everything is done, output PDF and reset UI

@@ -21,8 +21,11 @@
 
         <title>Convert pictures to PDF</title>
 
-        <!-- Bootstrap core CSS -->
+        <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="3rdparty/bootstrap-3.3.5/css/bootswatch-paper.min.css">
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="3rdparty/font-awesome-4.4.0/css/font-awesome.min.css">
 
         <!-- pics2pdf.css -->
         <link rel="stylesheet" href="pics2pdf.css">
@@ -32,20 +35,20 @@
         <nav class="navbar navbar-default navbar-fixed-top">
             <div class="container-fluid">
                 <span class="btn btn-primary navbar-btn btn-file navbar-nav">
-                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    <i class="fa fa-plus" aria-hidden="true"></i>
                     Add Pictures
                     <input type="file" id="image-input" name="images[]" accept="image/jpeg, image/png, image/gif" multiple />
                 </span>
 
                 <div class="btn-group navbar-nav">
                     <button type="button" class="btn btn-info navbar-btn" data-toggle="modal" data-target="#options-modal">
-                        <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+                        <i class="fa fa-wrench" aria-hidden="true"></i>
                         Edit PDF Options
                     </button>
                 </div>
 
                 <button type="button" id="pdfbutton" class="btn btn-success navbar-btn navbar-nav disabled">
-                    <span class="glyphicon glyphicon-file" aria-hidden="true"></span> Create PDF
+                    <i class="fa fa-file-pdf-o" aria-hidden="true"></i> Create PDF
                 </button>
             </div>
         </nav>
@@ -151,7 +154,7 @@
 
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="https://github.com/flesser/pics2pdf">
-                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                        <i class="fa fa-info-circle" aria-hidden="true"></i></span>
                         About
                     </a></li>
                 </ul>
