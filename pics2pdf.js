@@ -53,8 +53,8 @@ function getImageFromFile(f, next) {
     thumbnail.spin();
 
     var deleteButton = $('<button class="btn btn-danger image-button-remove">'
-    + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
-    + ' remove</button>').appendTo(buttons);
+                            + '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
+                            + ' remove</button>').appendTo(buttons);
     deleteButton.click(function() {
         $(this).parent().parent().parent().fadeOut('', function() {
             $(this).next('.clear').remove();  // remove clear helper
@@ -67,13 +67,19 @@ function getImageFromFile(f, next) {
     });
 
     $('#image-row').append(imageContainer);
-    $('#image-row').append($('<div class="clear"></div>'));
 
     thumbnail.data('filesize', f.size);
 
     var reader = new FileReader();
     reader.onload = (function(thumbnail) {
         return function(e) {
+            var imageFormat = e.target.result.substr(0, 16).split('/')[1].split(';')[0];
+            if ($.inArray(imageFormat, ['jpeg', 'png', 'gif']) == -1) {
+                delete this;
+                imageContainer.remove();
+                next();
+                return;
+            }
             var img = document.createElement('img');
             img.src = e.target.result;
             thumbnail.data('imagedata', e.target.result);
@@ -88,6 +94,10 @@ function getImageFromFile(f, next) {
                 thumbnail.children('.image-caption').addClass('image-overlay');
                 thumbnail.append($('<img class="img-responsive" src="' + dataurl + '" title="drag to reorder"/>'));
                 thumbnail.spin(false);
+
+                // add clearfix helper
+                $('#image-row').append($('<div class="clear"></div>'));
+
                 next();
             }
             delete this;
@@ -96,7 +106,7 @@ function getImageFromFile(f, next) {
     reader.readAsDataURL(f);
 }
 
-function createFileReaderTask(file){
+function createFileReaderTask(file) {
     return function(next){
         getImageFromFile(file, next);
     }
@@ -118,6 +128,9 @@ function handleFileSelect(evt) {
     }
     if (pageCount > 0) {
         $('#welcome').slideUp();
+        $('#pdfbutton').addClass('disabled');
+        $('#pdfbutton').html('<span class="glyphicon">&ensp;</span> &ensp; reading pictures...');
+        $('#pdfbutton span').spin('small');
     }
     $('#status-pagecount').text(pageCount + ' pages');
 
@@ -125,6 +138,7 @@ function handleFileSelect(evt) {
         // reset file input
         evt.target.value = null;
         $('#pdfbutton').removeClass('disabled');
+        $('#pdfbutton').html('<span class="glyphicon glyphicon-file" aria-hidden="true"></span> Create PDF');
 
         var totalSize = 0;
         $(".thumbnail").each(function() {
@@ -140,87 +154,112 @@ function handleFileSelect(evt) {
 /**********************************************************************************************************************/
 
 
-function createPDF() {
-    $('#pdfbutton').addClass('disabled');
-    $('#progress-modal').modal({
-        backdrop: 'static',
-        keyboard: false
-    });
-    $('#progress-modal').on('shown.bs.modal', function() {
-        var progressBar = $('#progress-bar');
-        var progressLabel = $('#progress-label');
-        progressBar.width('0%');
-        progressLabel.text("preparing...");
+function addPdfPage(pdf, imageData, maxSize, next) {
+    var pageCount = $('.thumbnail').length;
+    var currentPage = (pageCount - $(document).queue("pdfPageTasks").length) + 1;
+    var percent = currentPage / pageCount * 100;
 
-        var dpi = 300;  // TODO: maybe make this an option
+    $('#progress-bar').attr('aria-valuenow', percent);
+    $('#progress-bar').width(percent + '%');
+    $('#progress-label').text("page " + currentPage + " of " + pageCount + "...");
 
-        var pdf = jsPDF('l', 'in', 'a4');
-        pdf.deletePage(1);
-
-        var title = $('#pdfTitle').val();
-        var filename = (title || 'output') + '.pdf';
-        pdf.setProperties({
-            title: title,
-            subject: $('#pdfSubject').val(),
-            author: $('#pdfAuthor').val(),
-            creator: 'flesser.github.io/pics2pdf'
-        });
-
-        var doResize = ($('input[name="resizeRadios"]:checked').val() == 1);
-        if (doResize) {
-            var maxSize = parseInt($('#maxImageSize').val());
-            if (!maxSize) {
-                // TODO: maybe nicer looking error modal?
-                alert('Invalid pixel value for image size reduction!\nPlease check again under "Edit PDF Options".');
-                return;
-            }
+    var img = document.createElement('img');
+    img.onload = function() {
+        if (maxSize > 0) {
+            var canvas = document.createElement('canvas');
+            var dimensions = fitImage(this, maxSize);
+            canvas.width = dimensions[0];
+            canvas.height = dimensions[1];
+            canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+            imageData = canvas.toDataURL("image/jpeg");
+        } else {
+            var dimensions = [this.width, this.height];
         }
 
-        var pageCount = $(".thumbnail").length;
-        $(".thumbnail").each(function(i) {
-            progressBar.width((i+1) / pageCount * 100 + '%');
-            progressLabel.text("Page " + (i+1) + " of " + pageCount);
+        var dpi = 300;  // TODO: maybe make this an option
+        var pageWidth = dimensions[0] / dpi;
+        var pageHeight = dimensions[1] / dpi;
+        pdf.addPage([pageWidth, pageHeight]);
+        var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
+        pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
+        next()
+    }
+    img.src = imageData;
+}
 
-            var imageData = $(this).data('imagedata');
+function createPdfPageTask(pdf, imageData, maxSize) {
+    return function(next) {
+        addPdfPage(pdf, imageData, maxSize, next);
+    }
+}
 
-            var img = document.createElement('img');
-            img.onload = function() {
-                if (doResize) {
-                    var canvas = document.createElement('canvas');
-                    var dimensions = fitImage(this, maxSize);
-                    canvas.width = dimensions[0];
-                    canvas.height = dimensions[1];
-                    canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
-                    imageData = canvas.toDataURL("image/jpeg");
-                } else {
-                    var dimensions = [this.width, this.height];
-                }
 
-                var pageWidth = dimensions[0] / dpi;
-                var pageHeight = dimensions[1] / dpi;
-                pdf.addPage([pageWidth, pageHeight]);
-                var imageFormat = imageData.substr(0, 16).split('/')[1].split(';')[0];
-                pdf.addImage(imageData, imageFormat, 0, 0, pageWidth, pageHeight);
+/**********************************************************************************************************************/
 
-                if (i == pageCount - 1) {
-                    // last one: save PDF
-                    var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
-                    if (isSafari) {
-                        // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
-                        // open inline instead
-                        pdf.output('dataurl');
-                    } else {
-                        // create a nice download with file name
-                        pdf.save(filename);
-                    }
-                    $('#pdfbutton').removeClass('disabled');
-                    $('#progress-modal').modal('hide');
-                    progressBar.width('0%');
-                }
-            }
-            img.src = imageData;
-        });
+
+function createPDF() {
+    $('#pdfbutton').addClass('disabled');
+
+    // initiate progress modal
+    $(document).queue('pdfPageTasks', function(next) {
+        $('#progress-bar').width('0%');
+        $('#progress-label').text("preparing...");
+        $('#progress-modal').modal({
+            backdrop: 'static',
+            keyboard: false
+        }).on('shown.bs.modal', next);
     });
+
+    // setup PDF document
+    var pdf = jsPDF('l', 'in', 'a4');
+    pdf.deletePage(1);
+
+    var title = $('#pdfTitle').val();
+    var filename = (title || 'output') + '.pdf';
+    pdf.setProperties({
+        title: title,
+        subject: $('#pdfSubject').val(),
+        author: $('#pdfAuthor').val(),
+        creator: 'flesser.github.io/pics2pdf'
+    });
+
+    // should we resize images?
+    if ($('input[name="resizeRadios"]:checked').val() == 1) {
+        var maxSize = parseInt($('#maxImageSize').val());
+        if (!maxSize) {
+            // TODO: maybe nicer looking error modal?
+            alert('Invalid pixel value for image size reduction!\nPlease check again under "Edit PDF Options".');
+            return;
+        }
+    } else {
+        maxSize = -1;
+    }
+
+    // queue page generation
+    $(".thumbnail").each(function(i) {
+        $(document).queue('pdfPageTasks', createPdfPageTask(pdf, $(this).data('imagedata'), maxSize));
+    });
+
+    // once everything is done, output PDF and reset UI
+    $(document).queue('pdfPageTasks', function() {
+        var isSafari = /^((?!chrome).)*safari/i.test(navigator.userAgent);
+        if (isSafari) {
+            // download doesn't work in Safari, see https://github.com/MrRio/jsPDF/issues/196
+            // open inline instead
+            pdf.output('dataurl');
+        } else {
+            // create a nice download with file name
+            pdf.save(filename);
+        }
+        // reset UI
+        $('#pdfbutton').removeClass('disabled');
+        $('#progress-modal').modal('hide');
+        $('#progress-bar').width('0%');
+        $('#progress-bar').attr('aria-valuenow', 0);
+    });
+
+    // run queue
+    $(document).dequeue('pdfPageTasks');
 }
 
 

@@ -48,11 +48,11 @@ body {
     opacity: 0;
     position: absolute;
     margin: 4px;
-    -webkit-transition: all 300ms ease-out;
-    -moz-transition: all 300ms ease-out;
-    -o-transition: all 300ms ease-out;
-    -ms-transition: all 300ms ease-out;
-    transition: all 300ms ease-out;
+    -webkit-transition: opacity 300ms ease-out;
+    -moz-transition: opacity 300ms ease-out;
+    -o-transition: opacity 300ms ease-out;
+    -ms-transition: opacity 300ms ease-out;
+    transition: opacity 300ms ease-out;
 }
 .image-caption {
     bottom: 0;
@@ -96,6 +96,13 @@ body {
 }
 
 
+/* disable progress bar animation because it's too slow */
+.progress-bar {
+    -webkit-transition: none !important;
+    transition: none !important;
+}
+
+
 /* keep navbar horizontal even in xs mode */
 .navbar-text,
 .navbar-nav,
@@ -114,6 +121,7 @@ body {
 .navbar .btn-group {
     margin: 0;
 }
+
 
 /* footer height */
 footer .navbar-text {
