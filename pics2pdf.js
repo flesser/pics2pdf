@@ -250,7 +250,7 @@ function createPDF() {
         $('#progress-modal').modal({
             backdrop: 'static',
             keyboard: false
-        }).on('shown.bs.modal', next);
+        }).one('shown.bs.modal', next );
     });
 
     // setup PDF document
@@ -262,8 +262,8 @@ function createPDF() {
     pdf.setProperties({
         title: title,
         subject: $('#pdfSubject').val(),
-                      author: $('#pdfAuthor').val(),
-                      creator: 'flesser.github.io/pics2pdf'
+        author: $('#pdfAuthor').val(),
+        creator: 'flesser.github.io/pics2pdf'
     });
 
     // should we resize images?
