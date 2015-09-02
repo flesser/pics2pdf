@@ -103,6 +103,10 @@ function getImageFromFile(f, next) {
         });
     });
 
+    var pageCount = $('#status-pagecount').data('value');
+    var currentPage = (pageCount - $(document).queue("fileReaderTasks").length) + 1;
+    $('#readstatus').text('(' + currentPage + '/' + pageCount + ')');
+
     $('#image-row').append(imageContainer);
 
     thumbnail.data('filesize', f.size);
@@ -117,15 +121,19 @@ function getImageFromFile(f, next) {
                 next();
                 return;
             }
+
             var img = document.createElement('img');
             img.src = e.target.result;
             thumbnail.data('imagedata', e.target.result);
+            delete this;
+
             img.onload = function() {
                 var canvas = document.createElement('canvas');
                 var dimensions = fitImage(this, 500);
                 canvas.width = dimensions[0];
                 canvas.height = dimensions[1];
                 canvas.getContext("2d").drawImage(this, 0, 0, canvas.width, canvas.height);
+                delete this;
 
                 var dataurl = canvas.toDataURL("image/jpeg");
                 thumbnail.children('.image-caption').addClass('image-overlay');
@@ -137,7 +145,6 @@ function getImageFromFile(f, next) {
 
                 next();
             }
-            delete this;
         };
     })(thumbnail);
     reader.readAsDataURL(f);
@@ -166,9 +173,10 @@ function handleFileSelect(evt) {
     if (pageCount > 0) {
         $('#welcome').slideUp();
         $('#pdfbutton').addClass('disabled');
-        $('#pdfbutton').html('<span class="glyphicon">&ensp;</span> &ensp; reading pictures...');
+        $('#pdfbutton').html('<span class="glyphicon">&ensp;</span> &ensp; reading pictures... <span id="readstatus"></span>');
         $('#pdfbutton span').spin('small');
     }
+    $('#status-pagecount').data('value', pageCount);
     $('#status-pagecount').text(pageCount + ' pages');
 
     $(document).queue('fileReaderTasks', function() {
