@@ -93,9 +93,9 @@ function getImageFromFile(f, next) {
     var deleteButton = $('<button class="btn btn-danger image-button-remove" title="remove">'
     + '<i class="fa fa-trash-o" aria-hidden="true"></i></button>').appendTo(buttons);
     deleteButton.click(function() {
-        $(this).parent().parent().parent().fadeOut('', function() {
-            $(this).next('.clear').remove();  // remove clear helper
-            $(this).remove();  // remove image
+        $(this).parent(/*.image-buttons*/).parent(/*.thumbnail*/).parent(/*.image-container*/).fadeOut('', function() {
+            $(this).next('.clear').remove();  // remove clearfix helper
+            $(this).remove();  // remove image-container
             if ($(".thumbnail").length == 0) {
                 $('#pdfbutton').addClass('disabled');
                 $('#welcome').fadeIn();
@@ -313,6 +313,7 @@ $(document).ready(function() {
     $('#image-input').bind('change', handleFileSelect);
     $('#image-row').sortable({
         items: "> .image-container",
+        handle: ".thumbnail:hover, .thumbnail:focus",
         helper: 'clone',
         placeholder: 'col-xs-6 col-sm-4 col-md-3 col-lg-2 center-block image-container',
         start: function(e, ui) {

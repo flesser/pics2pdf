@@ -72,19 +72,22 @@ body {
 }
 .thumbnail:focus .image-caption,
 .thumbnail:hover .image-caption {
-    opacity: 0.7
+    opacity: 0.7;
 }
 .thumbnail:focus .image-buttons,
 .thumbnail:hover .image-buttons {
-    opacity: 1
+    opacity: 1;
 }
 
 .thumbnail {
     position: relative;
     min-height: 100px;
-    cursor: move;
 }
-
+.thumbnail:focus,
+.thumbnail:hover {
+    cursor: move;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+}
 
 
 /* disable progress bar animation because it's too slow */
