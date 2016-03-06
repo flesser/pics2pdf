@@ -1,5 +1,5 @@
 # pics2pdf
-Convert pictures to multi-paged PDF in pure client-side Javascript.
+Convert pictures to multi-paged PDF in pure client-side Javascript. Works well on mobile devices (Jolla, Sailfish, Android, iPhone, iPad).
 
 Live Demo available at https://flesser.github.io/pics2pdf/.
 
